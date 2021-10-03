@@ -5,6 +5,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
 
 import javax.servlet.http.HttpSession;
@@ -72,6 +73,26 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         ;
 
 
+        // 동일 계정에 대한 동시 세션 제어
+        http
+                .sessionManagement()
+                .maximumSessions(1)
+                .maxSessionsPreventsLogin(false)
+                .expiredUrl("/expired")
+        ;
+
+        // 세션 고정(공격) 보호
+        http
+                .sessionManagement()
+                .sessionFixation()
+                .changeSessionId()
+        ;
+
+        // 세션 정책
+        http
+                .sessionManagement()
+                .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED) // stateless -> jwt 에서 이용
+        ;
 
     }
 }
