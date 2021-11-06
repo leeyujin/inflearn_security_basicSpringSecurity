@@ -30,4 +30,14 @@ public class SecurityController {
         return "admin";
     }
 
+    @GetMapping("/denided")
+    public String denied(){
+        return "access denied";
+    }
+
+    @GetMapping("/login")
+    public String login(){
+        return "login";
+    }
+
 }
