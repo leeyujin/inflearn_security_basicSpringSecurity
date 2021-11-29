@@ -51,22 +51,14 @@ public class AjaxSecurityConfig extends WebSecurityConfigurerAdapter {
                 .antMatcher("/api/**")
                 .authorizeRequests()
                 .antMatchers("/api/messages").hasRole("MANAGER")
+                .antMatchers("/api/login").permitAll()
                 .anyRequest().authenticated()
-//        .and()
-//                .addFilterBefore(ajaxLoginProcessingFilter(), UsernamePasswordAuthenticationFilter.class)
-        ;
-
-        http
+                .and()
                 .exceptionHandling()
-                // ExceptionTranslationFilter는 2개의 예외를 처리함
-                // 1. 익명사용자가 접근권한이 없는 자원에 접근했을 때
                 .authenticationEntryPoint(new AjaxLoginAuthenticationEntryPoint())
-                // 2. 인증받은 사용자가 접근권한이 없는 자원에 접근했을 때
-                .accessDeniedHandler(ajaxAccessDeniedHandler())
-        ;
-        http
-        .csrf().disable()
-        ;
+                .accessDeniedHandler(ajaxAccessDeniedHandler());
+//    http
+//            .csrf().disable();
 
         customConfigurerAjax(http);
     }
@@ -85,7 +77,7 @@ public class AjaxSecurityConfig extends WebSecurityConfigurerAdapter {
         return new AjaxAccessDeniedHandler();
     }
 
-   /* @Bean
+    @Bean
     public AjaxLoginProcessingFilter ajaxLoginProcessingFilter() throws Exception {
         AjaxLoginProcessingFilter ajaxLoginProcessingFilter = new AjaxLoginProcessingFilter();
         ajaxLoginProcessingFilter.setAuthenticationManager(authenticationManagerBean());
@@ -93,5 +85,5 @@ public class AjaxSecurityConfig extends WebSecurityConfigurerAdapter {
         ajaxLoginProcessingFilter.setAuthenticationFailureHandler(ajaxAuthenticationFailureHandler());
         return ajaxLoginProcessingFilter;
 
-    }*/
+    }
 }
