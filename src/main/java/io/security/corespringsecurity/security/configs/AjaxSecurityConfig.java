@@ -1,6 +1,8 @@
 package io.security.corespringsecurity.security.configs;
 
+import io.security.corespringsecurity.common.AjaxLoginAuthenticationEntryPoint;
 import io.security.corespringsecurity.security.filter.AjaxLoginProcessingFilter;
+import io.security.corespringsecurity.security.handler.AjaxAccessDeniedHandler;
 import io.security.corespringsecurity.security.handler.AjaxAuthenticationFailureHandler;
 import io.security.corespringsecurity.security.handler.AjaxAuthenticationSuccessHandler;
 import io.security.corespringsecurity.security.provider.AjaxAuthenticationProvider;
@@ -11,6 +13,7 @@ import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
@@ -47,11 +50,27 @@ public class AjaxSecurityConfig extends WebSecurityConfigurerAdapter {
         http
                 .antMatcher("/api/**")
                 .authorizeRequests()
+                .antMatchers("/api/messages").hasRole("MANAGER")
                 .anyRequest().authenticated()
         .and()
                 .addFilterBefore(ajaxLoginProcessingFilter(), UsernamePasswordAuthenticationFilter.class)
+        ;
+
+        http
+                .exceptionHandling()
+                // ExceptionTranslationFilter는 2개의 예외를 처리함
+                // 1. 익명사용자가 접근권한이 없는 자원에 접근했을 때
+                .authenticationEntryPoint(new AjaxLoginAuthenticationEntryPoint())
+                // 2. 인증받은 사용자가 접근권한이 없는 자원에 접근했을 때
+                .accessDeniedHandler(ajaxAccessDeniedHandler())
+        ;
+        http
         .csrf().disable()
         ;
+    }
+
+    public AccessDeniedHandler ajaxAccessDeniedHandler() {
+        return new AjaxAccessDeniedHandler();
     }
 
     @Bean

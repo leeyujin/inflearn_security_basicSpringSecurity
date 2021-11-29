@@ -3,6 +3,8 @@ package io.security.corespringsecurity.controller.user;
 
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.ResponseBody;
 
 @Controller
 public class MessageController {
@@ -11,5 +13,11 @@ public class MessageController {
 	public String messages() throws Exception {
 
 		return "user/messages";
+	}
+
+	@PostMapping ("/api/messages")
+	@ResponseBody
+	public String apiMessages(){
+		return "messages ok";
 	}
 }
