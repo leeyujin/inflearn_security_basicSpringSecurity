@@ -31,7 +31,7 @@ public class AjaxLoginProcessingFilter extends AbstractAuthenticationProcessingF
             throw new IllegalStateException("Authentication is not supported");
         }
 
-        // request -> AccountDto로 타입 환
+        // request -> AccountDto로 타입 변환
         AccountDto accountDto = objectMapper.readValue(request.getReader(), AccountDto.class);
         if(StringUtils.isEmpty(accountDto.getUsername()) || StringUtils.isEmpty(accountDto.getPassword())){
             throw new IllegalArgumentException("Username or Password is empty");
