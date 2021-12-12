@@ -3,53 +3,45 @@ package io.security.corespringsecurity.security.filter;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.security.corespringsecurity.domain.dto.AccountDto;
 import io.security.corespringsecurity.security.token.AjaxAuthenticationToken;
+import io.security.corespringsecurity.util.WebUtil;
+import org.springframework.http.HttpMethod;
+import org.springframework.security.authentication.AuthenticationServiceException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.authentication.AbstractAuthenticationProcessingFilter;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.util.StringUtils;
 
-import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
 public class AjaxLoginProcessingFilter extends AbstractAuthenticationProcessingFilter {
 
-    private ObjectMapper objectMapper = new ObjectMapper();
+    private static final String XML_HTTP_REQUEST = "XMLHttpRequest";
+    private static final String X_REQUESTED_WITH = "X-Requested-With";
 
+    private ObjectMapper objectMapper = new ObjectMapper();
+    
     public AjaxLoginProcessingFilter() {
-        // 필터 작동 조건 1 ( 해당 URL에 접근 시 필터 작동 )
-        super(new AntPathRequestMatcher("/api/login"));
+        super(new AntPathRequestMatcher("/ajaxLogin", "POST"));
     }
 
     @Override
-    public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response) throws AuthenticationException, IOException, ServletException {
+    public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response)
+            throws AuthenticationException, IOException {
 
-        // 필터 작동 조건2, (해당 요청이 Ajax 일 때)
-        if(! isAjax(request)){
-            throw new IllegalStateException("Authentication is not supported");
+        if (!HttpMethod.POST.name().equals(request.getMethod()) || !WebUtil.isAjax(request)) {
+            throw new IllegalArgumentException("Authentication method not supported");
         }
 
-        // request -> AccountDto로 타입 변환
         AccountDto accountDto = objectMapper.readValue(request.getReader(), AccountDto.class);
-        if(StringUtils.isEmpty(accountDto.getUsername()) || StringUtils.isEmpty(accountDto.getPassword())){
-            throw new IllegalArgumentException("Username or Password is empty");
+
+        if (StringUtils.isEmpty(accountDto.getUsername()) || StringUtils.isEmpty(accountDto.getPassword())) {
+            throw new AuthenticationServiceException("Username or Password not provided");
         }
+        AjaxAuthenticationToken token = new AjaxAuthenticationToken(accountDto.getUsername(),accountDto.getPassword());
 
-        AjaxAuthenticationToken authenticationToken = new AjaxAuthenticationToken(accountDto.getUsername(), accountDto.getPassword());
-
-
-
-        return getAuthenticationManager().authenticate(authenticationToken);
-    }
-
-    private boolean isAjax(HttpServletRequest request) {
-
-        // 헤더(X-Requested-With)내용이 XMLHttpRequest 일 때
-        if("XMLHttpRequest".equals(request.getHeader("X-Requested-With"))){
-            return true;
-        }
-        return false;
+        return this.getAuthenticationManager().authenticate(token);
     }
 }
