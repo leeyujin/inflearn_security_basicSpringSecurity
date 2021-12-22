@@ -4,11 +4,13 @@ import io.security.corespringsecurity.domain.entity.RoleHierarchy;
 import io.security.corespringsecurity.repository.RoleHierarchyRepository;
 import io.security.corespringsecurity.service.RoleHierarchyService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Iterator;
 import java.util.List;
 
+@Service
 public class RoleHierarchyServiceImpl implements RoleHierarchyService {
 
     @Autowired
@@ -17,13 +19,14 @@ public class RoleHierarchyServiceImpl implements RoleHierarchyService {
     @Transactional
     @Override
     public String findAllHierarchy() {
+
         List<RoleHierarchy> rolesHierarchy = roleHierarchyRepository.findAll();
 
-        Iterator<RoleHierarchy> ite = rolesHierarchy.iterator();
+        Iterator<RoleHierarchy> itr = rolesHierarchy.iterator();
         StringBuilder concatedRoles = new StringBuilder();
-        while( ite.hasNext() ){
-            RoleHierarchy roleHierarchy = ite.next();
-            if( roleHierarchy.getParentName() != null){
+        while (itr.hasNext()) {
+            RoleHierarchy roleHierarchy = itr.next();
+            if (roleHierarchy.getParentName() != null) {
                 concatedRoles.append(roleHierarchy.getParentName().getChildName());
                 concatedRoles.append(" > ");
                 concatedRoles.append(roleHierarchy.getChildName());
@@ -31,5 +34,6 @@ public class RoleHierarchyServiceImpl implements RoleHierarchyService {
             }
         }
         return concatedRoles.toString();
+
     }
 }

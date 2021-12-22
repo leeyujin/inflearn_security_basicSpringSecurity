@@ -1,29 +1,27 @@
 package io.security.corespringsecurity.security.filter;
 
-import org.springframework.security.access.SecurityMetadataSource;
 import org.springframework.security.access.intercept.InterceptorStatusToken;
 import org.springframework.security.web.FilterInvocation;
-import org.springframework.security.web.access.intercept.FilterInvocationSecurityMetadataSource;
 import org.springframework.security.web.access.intercept.FilterSecurityInterceptor;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 
-import javax.servlet.*;
+import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-// FilterSecurityInterceptor 내용 복사 후 invoke만 유지 . 일부내용 수정
 public class PermitAllFilter extends FilterSecurityInterceptor {
 
     private static final String FILTER_APPLIED = "__spring_security_filterSecurityInterceptor_filterApplied";
     private boolean observeOncePerRequest = true;
 
-    private List<RequestMatcher> permitAllRequestMatchers = new ArrayList<>();
+    private List<RequestMatcher> permitAllRequestMatchers =  new ArrayList<>();
 
     public PermitAllFilter(String...permitAllResources){
-        for( String resource : permitAllResources ){
+
+        for(String resource : permitAllResources){
             permitAllRequestMatchers.add(new AntPathRequestMatcher(resource));
         }
     }
@@ -32,14 +30,14 @@ public class PermitAllFilter extends FilterSecurityInterceptor {
     protected InterceptorStatusToken beforeInvocation(Object object) {
 
         boolean permitAll = false;
-
         HttpServletRequest request = ((FilterInvocation) object).getRequest();
         for(RequestMatcher requestMatcher : permitAllRequestMatchers){
-            if( requestMatcher.matches(request) ){
+            if(requestMatcher.matches(request)){
                 permitAll = true;
                 break;
             }
         }
+
         if(permitAll){
             return null;
         }
@@ -47,32 +45,31 @@ public class PermitAllFilter extends FilterSecurityInterceptor {
         return super.beforeInvocation(object);
     }
 
-    public void invoke(FilterInvocation filterInvocation) throws IOException, ServletException {
-        if (isApplied(filterInvocation) && this.observeOncePerRequest) {
+    public void invoke(FilterInvocation fi) throws IOException, ServletException {
+        if ((fi.getRequest() != null)
+                && (fi.getRequest().getAttribute(FILTER_APPLIED) != null)
+                && observeOncePerRequest) {
             // filter already applied to this request and user wants us to observe
             // once-per-request handling, so don't re-do security checking
-            filterInvocation.getChain().doFilter(filterInvocation.getRequest(), filterInvocation.getResponse());
-            return;
+            fi.getChain().doFilter(fi.getRequest(), fi.getResponse());
         }
-        // first time this request being called, so perform security checking
-        if (filterInvocation.getRequest() != null && this.observeOncePerRequest) {
-            filterInvocation.getRequest().setAttribute(FILTER_APPLIED, Boolean.TRUE);
-        }
-        // 자체 메소드 구현
-//        InterceptorStatusToken token = super.beforeInvocation(filterInvocation);
-        InterceptorStatusToken token = beforeInvocation(filterInvocation);
-        try {
-            filterInvocation.getChain().doFilter(filterInvocation.getRequest(), filterInvocation.getResponse());
-        }
-        finally {
-            super.finallyInvocation(token);
-        }
-        super.afterInvocation(token, null);
-    }
-    private boolean isApplied(FilterInvocation filterInvocation) {
-        return (filterInvocation.getRequest() != null)
-                && (filterInvocation.getRequest().getAttribute(FILTER_APPLIED) != null);
-    }
+        else {
+            // first time this request being called, so perform security checking
+            if (fi.getRequest() != null && observeOncePerRequest) {
+                fi.getRequest().setAttribute(FILTER_APPLIED, Boolean.TRUE);
+            }
 
+            InterceptorStatusToken token = beforeInvocation(fi);
+
+            try {
+                fi.getChain().doFilter(fi.getRequest(), fi.getResponse());
+            }
+            finally {
+                super.finallyInvocation(token);
+            }
+
+            super.afterInvocation(token, null);
+        }
+    }
 
 }
